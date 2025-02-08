@@ -115,7 +115,7 @@ function Flow() {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full">
       {/* Üst Toolbar */}
       <div className="h-12 border-b flex items-center justify-between px-4">
         <div className="flex items-center space-x-2">
@@ -136,7 +136,7 @@ function Flow() {
       </div>
 
       {/* Flow Alanı */}
-      <div className="flex-1">
+      <div style={{ height: 'calc(100vh - 48px)' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}

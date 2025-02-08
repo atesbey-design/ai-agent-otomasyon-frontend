@@ -76,17 +76,30 @@ body {
 }
 
 .react-flow__controls {
-  @apply dark:bg-card dark:text-foreground;
+  @apply dark:bg-card dark:text-foreground dark:border-border !important;
+  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);
 }
 
-.react-flow__controls button {
-  @apply dark:bg-background dark:text-foreground dark:border-border;
+.react-flow__controls-button {
+  @apply dark:bg-background dark:text-foreground dark:border-border dark:hover:bg-accent !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.react-flow__controls-button svg {
+  @apply dark:fill-current !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .react-flow__minimap {
-  @apply dark:bg-card;
+  @apply dark:bg-card dark:border-border !important;
 }
 
 .react-flow__attribution {
   @apply dark:bg-background dark:text-foreground;
+}
+
+.react-flow__background {
+  @apply dark:bg-background;
 }
