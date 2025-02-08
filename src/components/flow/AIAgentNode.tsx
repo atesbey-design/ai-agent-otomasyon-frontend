@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useDispatch } from 'react-redux';
 import { updateNode } from '@/store/slices/flowSlice';
-import { AgentType, AgentConfig } from '@/store/types';
+import { AgentType, AgentConfig, YoutubeSummarizerConfig } from '@/store/types';
 import { toast } from 'sonner';
 import { defaultAgentConfigs } from '@/store/defaultConfigs';
 
@@ -49,6 +49,8 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
         return 'bg-orange-100 dark:bg-orange-900';
       case 'translator':
         return 'bg-cyan-100 dark:bg-cyan-900';
+      case 'youtubeSummarizer':
+        return 'bg-red-100 dark:bg-red-900';
       default:
         return 'bg-gray-100 dark:bg-gray-800';
     }
@@ -70,6 +72,8 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
         return '📝';
       case 'translator':
         return '🌐';
+      case 'youtubeSummarizer':
+        return '📺';
       default:
         return '?';
     }
@@ -87,6 +91,83 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
     }));
     setIsOpen(false);
     toast.success('Yapılandırma kaydedildi');
+  };
+
+  const renderAgentSpecificConfig = () => {
+    if (data.type === 'youtubeSummarizer') {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>YouTube URL</Label>
+            <Input
+              value={(config as YoutubeSummarizerConfig).youtubeUrl}
+              onChange={(e) => setConfig({
+                ...config,
+                youtubeUrl: e.target.value,
+              })}
+              placeholder="YouTube video URL'sini girin"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Özelleştirilmiş Prompt</Label>
+            <Textarea
+              value={(config as YoutubeSummarizerConfig).customPrompt}
+              onChange={(e) => setConfig({
+                ...config,
+                customPrompt: e.target.value,
+              })}
+              placeholder="Özel prompt girin"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Çıktı Formatı</Label>
+            <select
+              className="w-full p-2 rounded-md border border-input bg-background"
+              value={(config as YoutubeSummarizerConfig).outputFormat}
+              onChange={(e) => setConfig({
+                ...config,
+                outputFormat: e.target.value as 'text' | 'bullet' | 'chapters',
+              })}
+            >
+              <option value="text">Düz Metin</option>
+              <option value="bullet">Madde İşaretleri</option>
+              <option value="chapters">Bölümler</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="includeThumbnail"
+              checked={(config as YoutubeSummarizerConfig).includeThumbnail}
+              onChange={(e) => setConfig({
+                ...config,
+                includeThumbnail: e.target.checked,
+              })}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="includeThumbnail">Küçük Resim Ekle</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="includeTimestamps"
+              checked={(config as YoutubeSummarizerConfig).includeTimestamps}
+              onChange={(e) => setConfig({
+                ...config,
+                includeTimestamps: e.target.checked,
+              })}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="includeTimestamps">Zaman Damgalarını Ekle</Label>
+          </div>
+        </>
+      );
+    }
+    return null;
   };
 
   return (
@@ -121,53 +202,59 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Model</Label>
-              <Input
-                value={config.modelConfig.model}
-                onChange={(e) => setConfig({
-                  ...config,
-                  modelConfig: {
-                    ...config.modelConfig,
-                    model: e.target.value
-                  }
-                })}
-                placeholder="Kullanılacak model"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Sistem Prompt</Label>
-              <Textarea
-                value={config.modelConfig.systemPrompt}
-                onChange={(e) => setConfig({
-                  ...config,
-                  modelConfig: {
-                    ...config.modelConfig,
-                    systemPrompt: e.target.value
-                  }
-                })}
-                placeholder="Sistem promptunu girin"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Sıcaklık (Temperature)</Label>
-              <Input
-                type="number"
-                min="0"
-                max="1"
-                step="0.1"
-                value={config.modelConfig.temperature}
-                onChange={(e) => setConfig({
-                  ...config,
-                  modelConfig: {
-                    ...config.modelConfig,
-                    temperature: parseFloat(e.target.value)
-                  }
-                })}
-              />
-            </div>
+            {data.type !== 'youtubeSummarizer' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input
+                    value={config.modelConfig.model}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      modelConfig: {
+                        ...config.modelConfig,
+                        model: e.target.value
+                      }
+                    })}
+                    placeholder="Kullanılacak model"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Sistem Prompt</Label>
+                  <Textarea
+                    value={config.modelConfig.systemPrompt}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      modelConfig: {
+                        ...config.modelConfig,
+                        systemPrompt: e.target.value
+                      }
+                    })}
+                    placeholder="Sistem promptunu girin"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Sıcaklık (Temperature)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={config.modelConfig.temperature}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      modelConfig: {
+                        ...config.modelConfig,
+                        temperature: parseFloat(e.target.value)
+                      }
+                    })}
+                  />
+                </div>
+              </>
+            )}
+
+            {renderAgentSpecificConfig()}
 
             <Button className="w-full" onClick={handleSave}>Kaydet</Button>
           </div>

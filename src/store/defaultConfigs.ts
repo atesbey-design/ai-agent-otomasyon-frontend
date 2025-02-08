@@ -117,6 +117,25 @@ export const defaultAgentConfigs: Record<AgentType, Partial<AgentConfig>> = {
     preserveFormatting: true,
     specialization: 'general',
   },
+  youtubeSummarizer: {
+    name: 'YouTube Summarizer',
+    description: 'YouTube video içeriklerini özetleme ve analiz',
+    youtubeUrl: '',
+    customPrompt: 'Bu YouTube videosunun ana noktalarını özetle ve önemli detayları vurgula.',
+    outputFormat: 'text',
+    language: 'tr',
+    maxLength: 1000,
+    includeThumbnail: true,
+    includeTimestamps: true,
+  },
+  result: {
+    name: 'Sonuç Görüntüleyici',
+    description: 'Agent çıktılarını görüntüleme ve analiz',
+    displayFormat: 'text',
+    autoRefresh: true,
+    refreshInterval: 5000,
+    maxHistoryLength: 10,
+  },
 };
 
 export function createDefaultAgentConfig(type: AgentType, llmType: LLMType = 'openai'): AgentConfig {

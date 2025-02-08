@@ -6,7 +6,9 @@ export type AgentType =
   | 'dataAnalyst' 
   | 'imageGenerator'
   | 'textGenerator'
-  | 'translator';
+  | 'translator'
+  | 'youtubeSummarizer'
+  | 'result';
 
 // LLM Model Tipleri
 export type LLMType = 'openai' | 'gemini' | 'anthropic' | 'llama2';
@@ -29,9 +31,8 @@ export interface OpenAIConfig extends BaseModelConfig {
 
 export interface GeminiConfig extends BaseModelConfig {
   type: 'gemini';
-  apiKey: string;
-  topK: number;
-  maxOutputTokens: number;
+  apiKey?: string;
+  maxOutputTokens?: number;
 }
 
 export interface AnthropicConfig extends BaseModelConfig {
@@ -138,6 +139,23 @@ export interface TranslatorConfig extends BaseAgentConfig {
   specialization?: 'general' | 'technical' | 'legal' | 'medical';
 }
 
+export interface YoutubeSummarizerConfig extends BaseAgentConfig {
+  youtubeUrl: string;
+  customPrompt: string;
+  outputFormat: 'text' | 'bullet' | 'chapters';
+  language: string;
+  maxLength?: number;
+  includeThumbnail: boolean;
+  includeTimestamps: boolean;
+}
+
+export interface ResultConfig extends BaseAgentConfig {
+  displayFormat: 'text' | 'json' | 'markdown' | 'html';
+  autoRefresh: boolean;
+  refreshInterval?: number;
+  maxHistoryLength?: number;
+}
+
 export type AgentConfig =
   | WebScraperConfig
   | WebSearcherConfig
@@ -145,10 +163,12 @@ export type AgentConfig =
   | DataAnalystConfig
   | ImageGeneratorConfig
   | TextGeneratorConfig
-  | TranslatorConfig;
+  | TranslatorConfig
+  | YoutubeSummarizerConfig
+  | ResultConfig;
 
 // Node Types
-export type NodeType = 'aiAgent';
+export type NodeType = 'aiAgent' | 'resultNode';
 
 // Agent Node
 export interface AgentNode {
