@@ -1,17 +1,10 @@
-# AI Agent System - Frontend
+# AI Agent Otomasyon Frontend
 
-Bu proje, yapay zeka ajanlarını görsel bir arayüz üzerinden yönetmenizi ve birbirleriyle etkileşime sokmalarını sağlayan bir sistemin frontend uygulamasıdır.
+Bu proje, AI Agent Otomasyon sisteminin frontend kısmını içerir. React ve Next.js kullanılarak geliştirilmiş modern bir web uygulamasıdır.
 
-## 🚀 Özellikler
+## Sistem Tasarımı
 
-- 🎨 Modern ve kullanıcı dostu arayüz
-- 🌙 Karanlık/Aydınlık tema desteği
-- 🔍 AI Agent arama ve filtreleme
-- 🎯 Sürükle-bırak ile kolay agent ekleme
-- 📊 Görsel akış diyagramı
-- ⚡ Gerçek zamanlı güncelleme
-- 🔄 Otomatik durum senkronizasyonu
-- 📱 Responsive tasarım
+![Sistem Tasarımı](./public/design.png)
 
 ## 🛠️ Teknolojiler
 
@@ -143,9 +136,9 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 ## 📞 İletişim
 
-- Proje Sahibi: [İsim]
-- E-posta: [E-posta adresi]
-- GitHub: [GitHub profili]
+- Proje Sahibi: Tuncer Bağçabaşı
+- E-posta: tuncerbbostancibasi@gmail.com
+- GitHub: https://github.com/atesbey-design
 
 ## 🙏 Teşekkürler
 
