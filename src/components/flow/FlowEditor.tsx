@@ -14,7 +14,7 @@ import ReactFlow, {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addNode, updateNodePosition, addEdge, removeNode, removeEdge, updateExecutionResult } from '@/store/slices/flowSlice';
-import { AgentType, AgentNode, NodeType } from '@/store/types';
+import { AgentType, AgentNode, NodeType, FlowConnection } from '@/store/types';
 import { createDefaultAgentConfig } from '@/store/defaultConfigs';
 import { executeAgent } from '@/api/agents';
 import AIAgentNode from './AIAgentNode';
@@ -29,9 +29,50 @@ const nodeTypes = {
   resultNode: ResultNode,
 };
 
+// Edge stil fonksiyonu
+const getEdgeStyle = (edge: Edge, executionResults: any) => {
+  const sourceResult = executionResults[edge.source];
+  
+  if (!sourceResult) {
+    return {
+      stroke: '#64748b', // Gri (default)
+      strokeWidth: 2,
+      transition: 'stroke 0.3s ease',
+    };
+  }
+
+  switch (sourceResult.status) {
+    case 'running':
+      return {
+        stroke: '#f97316', // Turuncu
+        strokeWidth: 2,
+        animation: 'flowEdgePulse 1.5s infinite',
+        transition: 'stroke 0.3s ease',
+      };
+    case 'completed':
+      return {
+        stroke: '#22c55e', // Yeşil
+        strokeWidth: 2,
+        transition: 'stroke 0.3s ease',
+      };
+    case 'error':
+      return {
+        stroke: '#ef4444', // Kırmızı
+        strokeWidth: 2,
+        transition: 'stroke 0.3s ease',
+      };
+    default:
+      return {
+        stroke: '#64748b', // Gri
+        strokeWidth: 2,
+        transition: 'stroke 0.3s ease',
+      };
+  }
+};
+
 function Flow() {
   const dispatch = useDispatch();
-  const { nodes, edges } = useSelector((state: RootState) => state.flow);
+  const { nodes, edges, executionResults } = useSelector((state: RootState) => state.flow);
   const { project } = useReactFlow();
 
   const onNodesChange = useCallback((changes: any[]) => {
@@ -118,10 +159,13 @@ function Flow() {
 
   const handleExecute = async () => {
     try {
-      // Tüm agent node'larını bul ve sırala (result node'lar hariç)
+      // Tüm agent node'ları bul (result node'lar hariç)
       const agentNodes = nodes.filter(node => node.type !== 'resultNode');
       
-      for (const node of agentNodes) {
+      // Node'ları sıralı çalıştırmak için bağlantıları takip et
+      const executionOrder = getExecutionOrder(agentNodes, edges);
+      
+      for (const node of executionOrder) {
         // Node'un durumunu 'running' olarak güncelle
         dispatch(updateExecutionResult({
           nodeId: node.id,
@@ -129,8 +173,14 @@ function Flow() {
         }));
 
         try {
+          // Önceki node'ların çıktılarını al
+          const inputs = getPreviousNodeOutputs(node.id, edges, executionResults);
+          
           // Node'u çalıştır
-          const result = await executeAgent(node.data.type, node.data.config);
+          const result = await executeAgent(node.data.type, {
+            ...node.data.config,
+            previousOutputs: inputs, // Önceki çıktıları config'e ekle
+          });
 
           // Başarılı sonucu kaydet
           dispatch(updateExecutionResult({
@@ -164,14 +214,69 @@ function Flow() {
           }));
           
           toast.error(`${node.data.type} çalıştırılırken hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+          break; // Hata durumunda sıralı çalıştırmayı durdur
         }
       }
 
-      toast.success('Tüm agent\'lar başarıyla çalıştırıldı');
+      toast.success('İşlem tamamlandı');
     } catch (error) {
       toast.error('Akış çalıştırılırken bir hata oluştu');
     }
   };
+
+  // Node'ları sıralı çalıştırmak için sıralama fonksiyonu
+  const getExecutionOrder = (nodes: AgentNode[], edges: FlowConnection[]) => {
+    const visited = new Set<string>();
+    const order: AgentNode[] = [];
+
+    const visit = (node: AgentNode) => {
+      if (visited.has(node.id)) return;
+      
+      // Önce bu node'a gelen bağlantıları bul
+      const incomingEdges = edges.filter(edge => edge.target === node.id);
+      
+      // Gelen bağlantıların kaynak node'larını ziyaret et
+      for (const edge of incomingEdges) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        if (sourceNode && !visited.has(sourceNode.id)) {
+          visit(sourceNode);
+        }
+      }
+
+      visited.add(node.id);
+      order.push(node);
+    };
+
+    // Tüm node'ları ziyaret et
+    nodes.forEach(node => visit(node));
+    return order;
+  };
+
+  // Önceki node'ların çıktılarını alma fonksiyonu
+  const getPreviousNodeOutputs = (nodeId: string, edges: FlowConnection[], results: any) => {
+    const inputs: any[] = [];
+    
+    // Bu node'a gelen bağlantıları bul
+    const incomingEdges = edges.filter(edge => edge.target === nodeId);
+    
+    // Her bağlantının kaynağındaki sonucu al
+    incomingEdges.forEach(edge => {
+      const sourceResult = results[edge.source];
+      if (sourceResult?.status === 'completed' && sourceResult.output) {
+        inputs.push(sourceResult.output);
+      }
+    });
+
+    return inputs;
+  };
+
+  // Edge'leri duruma göre güncelle
+  const styledEdges = edges.map(edge => ({
+    ...edge,
+    style: getEdgeStyle(edge, executionResults),
+    animated: executionResults[edge.source]?.status === 'running',
+    type: 'smoothstep',
+  }));
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -187,23 +292,31 @@ function Flow() {
             <PlayIcon className="mr-2 h-4 w-4" />
             Çalıştır
           </Button>
-          <Button size="sm" variant="outline">
-            <GearIcon className="mr-2 h-4 w-4" />
-            Ayarlar
-          </Button>
         </div>
         <div className="text-sm font-medium">AI Agent Akışı</div>
-        <Button size="sm" variant="outline">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Yeni Agent
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button 
+            size="sm" 
+            variant="destructive"
+            onClick={() => {
+              const selectedNodes = nodes.filter(node => node.selected);
+              if (selectedNodes.length > 0) {
+                selectedNodes.forEach(node => dispatch(removeNode(node.id)));
+                toast.success('Seçili node\'lar silindi');
+              }
+            }}
+            disabled={!nodes.some(node => node.selected)}
+          >
+            Seçili Node'ları Sil
+          </Button>
+        </div>
       </div>
 
       {/* Flow Alanı */}
       <div style={{ height: 'calc(100vh - 48px)' }}>
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={styledEdges}
           onNodesChange={onNodesChange}
           onNodesDelete={onNodeDelete}
           onEdgesDelete={onEdgesDelete}
@@ -213,12 +326,37 @@ function Flow() {
           nodeTypes={nodeTypes}
           fitView
           className="dark:bg-background"
+          deleteKeyCode={['Backspace', 'Delete']}
+          multiSelectionKeyCode={['Control', 'Meta']}
+          selectionKeyCode={['Shift']}
+          defaultEdgeOptions={{
+            type: 'smoothstep',
+            style: { strokeWidth: 2 },
+          }}
         >
           <Controls className="dark:bg-background dark:text-foreground dark:border-border" />
           <MiniMap className="dark:bg-background" />
           <Background gap={12} size={1} className="dark:bg-muted" />
         </ReactFlow>
       </div>
+
+      <style jsx global>{`
+        @keyframes flowEdgePulse {
+          0% {
+            stroke-opacity: 1;
+          }
+          50% {
+            stroke-opacity: 0.5;
+          }
+          100% {
+            stroke-opacity: 1;
+          }
+        }
+
+        .react-flow__edge-path {
+          transition: stroke 0.3s ease, stroke-opacity 0.3s ease;
+        }
+      `}</style>
     </div>
   );
 }
