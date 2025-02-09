@@ -71,6 +71,8 @@ export interface WebScraperConfig extends BaseAgentConfig {
 
 export interface WebSearcherConfig extends BaseAgentConfig {
   searchEngines: ('google' | 'bing' | 'duckduckgo')[];
+  searchQuery: string;
+  maxResults: number;
   apiKeys: {
     google?: string;
     bing?: string;

@@ -14,6 +14,8 @@ import { defaultAgentConfigs } from '@/store/defaultConfigs';
 import { RootState } from '@/store';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
+import { Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 type ResultNodeProps = {
   id: string;
@@ -63,6 +65,38 @@ export default function ResultNode({ id, data }: ResultNodeProps) {
     toast.success('Yapılandırma kaydedildi');
   };
 
+  // Bağlı olan kaynak node'un sonucunu al
+  const sourceEdge = edges.find(edge => edge.target === id);
+  const result = sourceEdge ? executionResults[sourceEdge.source] : null;
+
+  const getStatusColor = () => {
+    if (!result) return 'bg-gray-500';
+    
+    switch (result.status) {
+      case 'completed':
+        return 'bg-green-500';
+      case 'error':
+        return 'bg-red-500';
+      case 'running':
+        return 'bg-orange-500 animate-pulse';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const formatOutput = (output: any) => {
+    if (typeof output === 'string') {
+      return output;
+    }
+    if (typeof output === 'object') {
+      if (output.response) {
+        return output.response;
+      }
+      return JSON.stringify(output, null, 2);
+    }
+    return '';
+  };
+
   return (
     <div className="group relative">
       <Handle
@@ -73,98 +107,68 @@ export default function ResultNode({ id, data }: ResultNodeProps) {
         isConnectable={true}
       />
       
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Card className="w-[300px] cursor-pointer hover:ring-2 hover:ring-primary">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
-                  <span className="text-base">📊</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{defaultAgentConfigs.result.name}</span>
-                  <span className="text-xs text-muted-foreground">{defaultAgentConfigs.result.description}</span>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <ScrollArea className="h-[100px] w-full rounded-md border p-2">
-                <pre className="text-xs">{output}</pre>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </DialogTrigger>
-        
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Sonuç Görüntüleyici Yapılandırması</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Görüntüleme Formatı</Label>
-              <select
-                className="w-full p-2 rounded-md border border-input bg-background"
-                value={config.displayFormat}
-                onChange={(e) => setConfig({
-                  ...config,
-                  displayFormat: e.target.value as 'text' | 'json' | 'markdown' | 'html',
-                })}
-              >
-                <option value="text">Düz Metin</option>
-                <option value="json">JSON</option>
-                <option value="markdown">Markdown</option>
-                <option value="html">HTML</option>
-              </select>
+      <Card className="w-[300px] p-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
+              <h3 className="font-medium">Sonuç</h3>
             </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="autoRefresh">Otomatik Yenileme</Label>
-              <Switch
-                id="autoRefresh"
-                checked={config.autoRefresh}
-                onCheckedChange={(checked: boolean) => setConfig({
-                  ...config,
-                  autoRefresh: checked,
-                })}
-              />
-            </div>
-
-            {config.autoRefresh && (
-              <div className="space-y-2">
-                <Label>Yenileme Aralığı (ms)</Label>
-                <input
-                  type="number"
-                  min="1000"
-                  step="1000"
-                  value={config.refreshInterval}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    refreshInterval: parseInt(e.target.value),
-                  })}
-                  className="w-full p-2 rounded-md border border-input bg-background"
-                />
-              </div>
+            {result?.status === 'running' && (
+              <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
             )}
-
-            <div className="space-y-2">
-              <Label>Maksimum Geçmiş Uzunluğu</Label>
-              <input
-                type="number"
-                min="1"
-                value={config.maxHistoryLength}
-                onChange={(e) => setConfig({
-                  ...config,
-                  maxHistoryLength: parseInt(e.target.value),
-                })}
-                className="w-full p-2 rounded-md border border-input bg-background"
-              />
-            </div>
-
-            <Button className="w-full" onClick={handleSave}>Kaydet</Button>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {result?.status === 'completed' && result.output && (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    Sonucu Görüntüle
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Analiz Sonucu</DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>
+                        {formatOutput(result.output)}
+                      </ReactMarkdown>
+                    </div>
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
+
+              <div className="max-h-[150px] overflow-hidden rounded-md bg-muted p-3">
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>
+                    {formatOutput(result.output).slice(0, 200) + 
+                     (formatOutput(result.output).length > 200 ? '...' : '')}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </>
+          )}
+
+          {result?.status === 'error' && (
+            <div className="rounded-md bg-red-100 dark:bg-red-900/20 p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {result.error}
+              </p>
+            </div>
+          )}
+
+          {!result && (
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-sm text-muted-foreground">
+                Henüz sonuç yok...
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 } 

@@ -59,9 +59,12 @@ export const defaultAgentConfigs: Record<AgentType, Partial<AgentConfig>> = {
     name: 'Web Searcher',
     description: 'İnternet üzerinde arama ve bilgi toplama',
     searchEngines: ['google', 'bing'],
+    searchQuery: '',
+    maxResults: 4,
     filters: {
       safeSearch: true,
       timeRange: 'month',
+      language: 'tr',
     },
   },
   codeInterpreter: {

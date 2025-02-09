@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useDispatch } from 'react-redux';
 import { updateNode } from '@/store/slices/flowSlice';
-import { AgentType, AgentConfig, YoutubeSummarizerConfig } from '@/store/types';
+import { AgentType, AgentConfig, YoutubeSummarizerConfig, WebSearcherConfig } from '@/store/types';
 import { toast } from 'sonner';
 import { defaultAgentConfigs } from '@/store/defaultConfigs';
 
@@ -167,6 +167,78 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
         </>
       );
     }
+    
+    if (data.type === 'webSearcher') {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>Arama Sorgusu</Label>
+            <Input
+              value={(config as WebSearcherConfig).searchQuery}
+              onChange={(e) => setConfig({
+                ...config,
+                searchQuery: e.target.value,
+              })}
+              placeholder="Aramak istediğiniz sorguyu girin"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sonuç Sayısı</Label>
+            <Input
+              type="number"
+              min="1"
+              max="10"
+              value={(config as WebSearcherConfig).maxResults}
+              onChange={(e) => setConfig({
+                ...config,
+                maxResults: parseInt(e.target.value) || 4,
+              })}
+              placeholder="Kaç sonuç gösterilsin?"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Dil</Label>
+            <select
+              className="w-full p-2 rounded-md border border-input bg-background"
+              value={(config as WebSearcherConfig).filters.language}
+              onChange={(e) => setConfig({
+                ...config,
+                filters: {
+                  ...(config as WebSearcherConfig).filters,
+                  language: e.target.value,
+                },
+              })}
+            >
+              <option value="en">English</option>
+              <option value="tr">Türkçe</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="safeSearch"
+              checked={(config as WebSearcherConfig).filters.safeSearch}
+              onChange={(e) => setConfig({
+                ...config,
+                filters: {
+                  ...(config as WebSearcherConfig).filters,
+                  safeSearch: e.target.checked,
+                },
+              })}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="safeSearch">Güvenli Arama</Label>
+          </div>
+        </>
+      );
+    }
+
     return null;
   };
 
