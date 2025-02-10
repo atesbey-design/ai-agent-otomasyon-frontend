@@ -1,4 +1,4 @@
-import { WebSearcherConfig, YoutubeSummarizerConfig } from '@/store/types';
+import { WebSearcherConfig, YoutubeSummarizerConfig, ResearchAgentConfig } from '@/store/types';
 
 const API_URL = 'http://localhost:8000';
 
@@ -55,12 +55,43 @@ export async function executeWebSearcher(config: WebSearcherConfig) {
   }
 }
 
+export async function executeResearchAgent(config: ResearchAgentConfig) {
+  try {
+    const response = await fetch(`${API_URL}/research/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        topic: config.topic,
+        num_links: config.numLinks,
+        language: config.language,
+        depth: config.depth,
+        include_sources: config.includeSourceLinks,
+        format: config.format,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Araştırma sonuçları alınamadı');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Research API Error:', error);
+    throw error;
+  }
+}
+
 export async function executeAgent(type: string, config: any) {
   switch (type) {
     case 'youtubeSummarizer':
       return executeYoutubeSummarizer(config);
     case 'webSearcher':
       return executeWebSearcher(config);
+    case 'researchAgent':
+      return executeResearchAgent(config);
     default:
       throw new Error('Desteklenmeyen agent tipi');
   }

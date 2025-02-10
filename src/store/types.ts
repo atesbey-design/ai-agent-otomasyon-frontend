@@ -8,6 +8,7 @@ export type AgentType =
   | 'textGenerator'
   | 'translator'
   | 'youtubeSummarizer'
+  | 'researchAgent'
   | 'result';
 
 // LLM Model Tipleri
@@ -151,6 +152,15 @@ export interface YoutubeSummarizerConfig extends BaseAgentConfig {
   includeTimestamps: boolean;
 }
 
+export interface ResearchAgentConfig extends BaseAgentConfig {
+  topic: string;
+  numLinks: number;
+  depth: 'basic' | 'detailed' | 'comprehensive';
+  language: string;
+  includeSourceLinks: boolean;
+  format: 'text' | 'markdown' | 'bullet';
+}
+
 export interface ResultConfig extends BaseAgentConfig {
   displayFormat: 'text' | 'json' | 'markdown' | 'html';
   autoRefresh: boolean;
@@ -167,6 +177,7 @@ export type AgentConfig =
   | TextGeneratorConfig
   | TranslatorConfig
   | YoutubeSummarizerConfig
+  | ResearchAgentConfig
   | ResultConfig;
 
 // Node Types

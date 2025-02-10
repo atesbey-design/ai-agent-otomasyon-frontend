@@ -139,6 +139,16 @@ export const defaultAgentConfigs: Record<AgentType, Partial<AgentConfig>> = {
     refreshInterval: 5000,
     maxHistoryLength: 10,
   },
+  researchAgent: {
+    name: 'Research Agent',
+    description: 'Kapsamlı araştırma ve analiz yapma',
+    topic: '',
+    numLinks: 5,
+    depth: 'detailed',
+    language: 'tr',
+    includeSourceLinks: true,
+    format: 'markdown',
+  },
 };
 
 export function createDefaultAgentConfig(type: AgentType, llmType: LLMType = 'openai'): AgentConfig {

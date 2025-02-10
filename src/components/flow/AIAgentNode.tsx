@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useDispatch } from 'react-redux';
 import { updateNode } from '@/store/slices/flowSlice';
-import { AgentType, AgentConfig, YoutubeSummarizerConfig, WebSearcherConfig } from '@/store/types';
+import { AgentType, AgentConfig, YoutubeSummarizerConfig, WebSearcherConfig, ResearchAgentConfig, TextGeneratorConfig } from '@/store/types';
 import { toast } from 'sonner';
 import { defaultAgentConfigs } from '@/store/defaultConfigs';
 
@@ -33,6 +33,13 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
     }
   }, [data.config]);
 
+  const updateConfig = <T extends AgentConfig>(updates: Partial<T>) => {
+    setConfig(prevConfig => ({
+      ...prevConfig,
+      ...updates,
+    }) as T);
+  };
+
   const getNodeColor = () => {
     switch (data.type) {
       case 'webScraper':
@@ -51,6 +58,8 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
         return 'bg-cyan-100 dark:bg-cyan-900';
       case 'youtubeSummarizer':
         return 'bg-red-100 dark:bg-red-900';
+      case 'researchAgent':
+        return 'bg-teal-100 dark:bg-teal-900';
       default:
         return 'bg-gray-100 dark:bg-gray-800';
     }
@@ -74,6 +83,8 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
         return '🌐';
       case 'youtubeSummarizer':
         return '📺';
+      case 'researchAgent':
+        return '🔍';
       default:
         return '?';
     }
@@ -84,162 +95,13 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
       id,
       updates: {
         data: {
-          ...data,
+          type: data.type,
           config,
         },
       },
     }));
     setIsOpen(false);
     toast.success('Yapılandırma kaydedildi');
-  };
-
-  const renderAgentSpecificConfig = () => {
-    if (data.type === 'youtubeSummarizer') {
-      return (
-        <>
-          <div className="space-y-2">
-            <Label>YouTube URL</Label>
-            <Input
-              value={(config as YoutubeSummarizerConfig).youtubeUrl}
-              onChange={(e) => setConfig({
-                ...config,
-                youtubeUrl: e.target.value,
-              })}
-              placeholder="YouTube video URL'sini girin"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Özelleştirilmiş Prompt</Label>
-            <Textarea
-              value={(config as YoutubeSummarizerConfig).customPrompt}
-              onChange={(e) => setConfig({
-                ...config,
-                customPrompt: e.target.value,
-              })}
-              placeholder="Özel prompt girin"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Çıktı Formatı</Label>
-            <select
-              className="w-full p-2 rounded-md border border-input bg-background"
-              value={(config as YoutubeSummarizerConfig).outputFormat}
-              onChange={(e) => setConfig({
-                ...config,
-                outputFormat: e.target.value as 'text' | 'bullet' | 'chapters',
-              })}
-            >
-              <option value="text">Düz Metin</option>
-              <option value="bullet">Madde İşaretleri</option>
-              <option value="chapters">Bölümler</option>
-            </select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="includeThumbnail"
-              checked={(config as YoutubeSummarizerConfig).includeThumbnail}
-              onChange={(e) => setConfig({
-                ...config,
-                includeThumbnail: e.target.checked,
-              })}
-              className="rounded border-gray-300"
-            />
-            <Label htmlFor="includeThumbnail">Küçük Resim Ekle</Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="includeTimestamps"
-              checked={(config as YoutubeSummarizerConfig).includeTimestamps}
-              onChange={(e) => setConfig({
-                ...config,
-                includeTimestamps: e.target.checked,
-              })}
-              className="rounded border-gray-300"
-            />
-            <Label htmlFor="includeTimestamps">Zaman Damgalarını Ekle</Label>
-          </div>
-        </>
-      );
-    }
-    
-    if (data.type === 'webSearcher') {
-      return (
-        <>
-          <div className="space-y-2">
-            <Label>Arama Sorgusu</Label>
-            <Input
-              value={(config as WebSearcherConfig).searchQuery}
-              onChange={(e) => setConfig({
-                ...config,
-                searchQuery: e.target.value,
-              })}
-              placeholder="Aramak istediğiniz sorguyu girin"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Sonuç Sayısı</Label>
-            <Input
-              type="number"
-              min="1"
-              max="10"
-              value={(config as WebSearcherConfig).maxResults}
-              onChange={(e) => setConfig({
-                ...config,
-                maxResults: parseInt(e.target.value) || 4,
-              })}
-              placeholder="Kaç sonuç gösterilsin?"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Dil</Label>
-            <select
-              className="w-full p-2 rounded-md border border-input bg-background"
-              value={(config as WebSearcherConfig).filters.language}
-              onChange={(e) => setConfig({
-                ...config,
-                filters: {
-                  ...(config as WebSearcherConfig).filters,
-                  language: e.target.value,
-                },
-              })}
-            >
-              <option value="en">English</option>
-              <option value="tr">Türkçe</option>
-              <option value="de">Deutsch</option>
-              <option value="fr">Français</option>
-              <option value="es">Español</option>
-            </select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="safeSearch"
-              checked={(config as WebSearcherConfig).filters.safeSearch}
-              onChange={(e) => setConfig({
-                ...config,
-                filters: {
-                  ...(config as WebSearcherConfig).filters,
-                  safeSearch: e.target.checked,
-                },
-              })}
-              className="rounded border-gray-300"
-            />
-            <Label htmlFor="safeSearch">Güvenli Arama</Label>
-          </div>
-        </>
-      );
-    }
-
-    return null;
   };
 
   return (
@@ -252,21 +114,31 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
       />
       
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Card className="w-48 cursor-pointer hover:ring-2 hover:ring-primary">
-            <CardHeader className="p-3">
-              <CardTitle className="text-sm flex items-center space-x-2">
-                <div className={`w-8 h-8 ${getNodeColor()} rounded flex items-center justify-center`}>
-                  <span className="text-base">{getNodeIcon()}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{defaultAgentConfigs[data.type].name}</span>
-                  <span className="text-xs text-muted-foreground">{defaultAgentConfigs[data.type].description}</span>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </DialogTrigger>
+        <Card 
+          className="w-48 cursor-pointer hover:ring-2 hover:ring-primary"
+          onClick={(e) => {
+            if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 2) {
+              return;
+            }
+            setIsOpen(true);
+          }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(true);
+          }}
+        >
+          <CardHeader className="p-3">
+            <CardTitle className="text-sm flex items-center space-x-2">
+              <div className={`w-8 h-8 ${getNodeColor()} rounded flex items-center justify-center`}>
+                <span className="text-base">{getNodeIcon()}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{defaultAgentConfigs[data.type].name}</span>
+                <span className="text-xs text-muted-foreground">{defaultAgentConfigs[data.type].description}</span>
+              </div>
+            </CardTitle>
+          </CardHeader>
+        </Card>
         
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -274,59 +146,206 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {data.type !== 'youtubeSummarizer' && (
+            {data.type === 'youtubeSummarizer' && (
               <>
                 <div className="space-y-2">
-                  <Label>Model</Label>
+                  <Label>YouTube URL</Label>
                   <Input
-                    value={config.modelConfig.model}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      modelConfig: {
-                        ...config.modelConfig,
-                        model: e.target.value
-                      }
-                    })}
-                    placeholder="Kullanılacak model"
+                    value={(config as YoutubeSummarizerConfig).youtubeUrl}
+                    onChange={(e) => updateConfig<YoutubeSummarizerConfig>({ youtubeUrl: e.target.value })}
+                    placeholder="YouTube video URL'sini girin"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label>Sistem Prompt</Label>
+                  <Label>Özelleştirilmiş Prompt</Label>
                   <Textarea
-                    value={config.modelConfig.systemPrompt}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      modelConfig: {
-                        ...config.modelConfig,
-                        systemPrompt: e.target.value
-                      }
-                    })}
-                    placeholder="Sistem promptunu girin"
+                    value={(config as YoutubeSummarizerConfig).customPrompt}
+                    onChange={(e) => updateConfig<YoutubeSummarizerConfig>({ customPrompt: e.target.value })}
+                    placeholder="Özel prompt girin"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label>Sıcaklık (Temperature)</Label>
+                  <Label>Çıktı Formatı</Label>
+                  <select
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    value={(config as YoutubeSummarizerConfig).outputFormat}
+                    onChange={(e) => updateConfig<YoutubeSummarizerConfig>({ 
+                      outputFormat: e.target.value as 'text' | 'bullet' | 'chapters'
+                    })}
+                  >
+                    <option value="text">Düz Metin</option>
+                    <option value="bullet">Madde İşaretleri</option>
+                    <option value="chapters">Bölümler</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeThumbnail"
+                    checked={(config as YoutubeSummarizerConfig).includeThumbnail}
+                    onChange={(e) => updateConfig<YoutubeSummarizerConfig>({ includeThumbnail: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="includeThumbnail">Küçük Resim Ekle</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeTimestamps"
+                    checked={(config as YoutubeSummarizerConfig).includeTimestamps}
+                    onChange={(e) => updateConfig<YoutubeSummarizerConfig>({ includeTimestamps: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="includeTimestamps">Zaman Damgalarını Ekle</Label>
+                </div>
+              </>
+            )}
+            
+            {data.type === 'webSearcher' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Arama Sorgusu</Label>
+                  <Input
+                    value={(config as WebSearcherConfig).searchQuery}
+                    onChange={(e) => updateConfig<WebSearcherConfig>({ searchQuery: e.target.value })}
+                    placeholder="Aramak istediğiniz sorguyu girin"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Sonuç Sayısı</Label>
                   <Input
                     type="number"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={config.modelConfig.temperature}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      modelConfig: {
-                        ...config.modelConfig,
-                        temperature: parseFloat(e.target.value)
-                      }
-                    })}
+                    min="1"
+                    max="10"
+                    value={(config as WebSearcherConfig).maxResults}
+                    onChange={(e) => updateConfig<WebSearcherConfig>({ maxResults: parseInt(e.target.value) || 4 })}
+                    placeholder="Kaç sonuç gösterilsin?"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Dil</Label>
+                  <select
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    value={(config as WebSearcherConfig).filters.language}
+                    onChange={(e) => updateConfig<WebSearcherConfig>({
+                      filters: {
+                        ...(config as WebSearcherConfig).filters,
+                        language: e.target.value,
+                      },
+                    })}
+                  >
+                    <option value="en">English</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="safeSearch"
+                    checked={(config as WebSearcherConfig).filters.safeSearch}
+                    onChange={(e) => updateConfig<WebSearcherConfig>({
+                      filters: {
+                        ...(config as WebSearcherConfig).filters,
+                        safeSearch: e.target.checked,
+                      },
+                    })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="safeSearch">Güvenli Arama</Label>
                 </div>
               </>
             )}
 
-            {renderAgentSpecificConfig()}
+            {data.type === 'researchAgent' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Araştırma Konusu</Label>
+                  <Input
+                    value={(config as ResearchAgentConfig).topic}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ topic: e.target.value })}
+                    placeholder="Araştırılacak konuyu girin"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Kaynak Sayısı</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={(config as ResearchAgentConfig).numLinks}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ numLinks: parseInt(e.target.value) || 5 })}
+                    placeholder="Kullanılacak kaynak sayısı"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Derinlik Seviyesi</Label>
+                  <select
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    value={(config as ResearchAgentConfig).depth}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ 
+                      depth: e.target.value as 'basic' | 'detailed' | 'comprehensive' 
+                    })}
+                  >
+                    <option value="basic">Temel</option>
+                    <option value="detailed">Detaylı</option>
+                    <option value="comprehensive">Kapsamlı</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Dil</Label>
+                  <select
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    value={(config as ResearchAgentConfig).language}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ language: e.target.value })}
+                  >
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Çıktı Formatı</Label>
+                  <select
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    value={(config as ResearchAgentConfig).format}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ 
+                      format: e.target.value as 'text' | 'markdown' | 'bullet' 
+                    })}
+                  >
+                    <option value="text">Düz Metin</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="bullet">Madde İşaretleri</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="includeSourceLinks"
+                    checked={(config as ResearchAgentConfig).includeSourceLinks}
+                    onChange={(e) => updateConfig<ResearchAgentConfig>({ includeSourceLinks: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="includeSourceLinks">Kaynak Linklerini Ekle</Label>
+                </div>
+              </>
+            )}
 
             <Button className="w-full" onClick={handleSave}>Kaydet</Button>
           </div>
@@ -341,4 +360,4 @@ export default function AIAgentNode({ id, data }: AIAgentNodeProps) {
       />
     </div>
   );
-} 
+}

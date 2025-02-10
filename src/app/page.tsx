@@ -18,6 +18,7 @@ const agentIcons: Record<AgentType, string> = {
   textGenerator: '📝',
   translator: '🌐',
   youtubeSummarizer: '📺',
+  researchAgent: '📚',
   result: '📋',
 };
 
@@ -30,6 +31,7 @@ const agentColors: Record<AgentType, string> = {
   textGenerator: 'bg-orange-100 dark:bg-orange-900',
   translator: 'bg-cyan-100 dark:bg-cyan-900',
   youtubeSummarizer: 'bg-red-100 dark:bg-red-900',
+  researchAgent: 'bg-indigo-100 dark:bg-indigo-900',
   result: 'bg-gray-100 dark:bg-gray-900',
 };
 

@@ -299,13 +299,13 @@ function Flow() {
             size="sm" 
             variant="destructive"
             onClick={() => {
-              const selectedNodes = nodes.filter(node => node.selected);
+              const selectedNodes = nodes.filter((node: any) => node.selected);
               if (selectedNodes.length > 0) {
                 selectedNodes.forEach(node => dispatch(removeNode(node.id)));
                 toast.success('Seçili node\'lar silindi');
               }
             }}
-            disabled={!nodes.some(node => node.selected)}
+            disabled={!nodes.some((node: any) => node.selected)}
           >
             Seçili Node'ları Sil
           </Button>
